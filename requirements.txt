@@ -1,0 +1,11 @@
+requests
+bs4
+matplotlib
+numpy
+pandas
+seaborn
+scikit-learn
+google.cloud
+pyarrow
+fsspec
+gcsfs
