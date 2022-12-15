@@ -1,5 +1,5 @@
 from data import increment_games_df, increment_league_df, load_data
-from params import NB_BATCH
+#from params import NB_BATCH
 import os
 
 if __name__ == '__main__':
