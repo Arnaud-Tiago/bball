@@ -19,7 +19,7 @@ def find_possible_plays(games):
     for index,row in games.iterrows():
         url_match_fiba = games.iloc[index]['fiba_game_id']
         if not url_match_fiba =='' and not type(url_match_fiba) == float :
-            reponse = requests.get(url_match_fiba, timeout = 10)
+            reponse = requests.get(url_match_fiba, timeout = 60)
             if reponse.status_code == 200 :
                 #print(reponse.status_code, url_match_fiba)     
                 game_detail = reponse.json()
@@ -50,7 +50,7 @@ def fetch_game_json(url):
     --------------------
     return : a json file containing the game information
     """    
-    reponse = requests.get(url, timeout = 10)
+    reponse = requests.get(url, timeout = 60)
     return reponse.json()
 
 

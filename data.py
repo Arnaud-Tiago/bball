@@ -77,7 +77,7 @@ def scrap_batch(start_index, verbose=True):
             print(f'Scraping in progress : {int((i - start_index)/BACTH_SIZE*100)} % completed')
         url = base_url_fiba+str(i)+'/data.json'
         try :
-            reponse = requests.get(url, timeout = 10)
+            reponse = requests.get(url, timeout = 60)
         except :
             print(f"ERROR - Request error on the following game : index {i}, url {url}")
         
