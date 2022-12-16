@@ -22,7 +22,7 @@ def save_data(df:pd.DataFrame, table_name:str, destination='local'):
         raise ValueError("Error : destination must be one of %r." % valid)
     
     if destination=="cloud":
-        client = storage.Client() # use service account credentials
+        client = storage.Client.from_service_account_json("basket-369913-0ead522d59d2.json") # use service account credentials
         export_bucket = client.get_bucket(BUCKET_NAME) #define bucket
         blob_name = table_name
        
@@ -43,7 +43,6 @@ def load_data(table_name:str, provenance='local') -> pd.DataFrame:
     """
     input :
         * table_name as a str
-        * clean as a boolean : determines if the table is to be load from cleaned or raw folder
         * provenance : can be 'local' or 'cloud' 
     ------
     returns : a pd.DataFrance
@@ -60,7 +59,7 @@ def load_data(table_name:str, provenance='local') -> pd.DataFrame:
         print(f"Table {table_name} successfully loaded from {path}.")
 
     else :
-        client = storage.Client() # use service account credentials
+        client = storage.Client.from_service_account_json("basket-369913-0ead522d59d2.json") # use service account credentials
         bucket = client.bucket(BUCKET_NAME) 
         df = pd.read_csv('gs://'+BUCKET_NAME+'/'+table_name)    
         if 'Unnamed: 0' in df.columns :
