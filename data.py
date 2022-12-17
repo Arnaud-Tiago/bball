@@ -134,7 +134,8 @@ def increment_games_df(source='local', verbose=True):
     if verbose > 0:
         print(f"End of scrapping at index: {start_index+BACTH_SIZE:_}.".replace('_',' '))
         print(f"Number of lines in the DataFrame: {df.shape[0]:_}.".replace('_',' '))
-    
+        print("Saving the DataFrame ... This may take a while ...")
+        
     save_data(df, table_name= 'all_fiba_games',destination=source)
     
     lldf.loc['all_fiba_games','last_scraped_index'] = start_index + BACTH_SIZE
