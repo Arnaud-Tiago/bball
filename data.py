@@ -25,11 +25,11 @@ def save_data(df:pd.DataFrame, table_name:str, destination='local'):
         #client = storage.Client.from_service_account_json("basket-369913-0ead522d59d2.json") # use service account credentials
         client = storage.Client()
         export_bucket = client.get_bucket(BUCKET_NAME) #define bucket
-        blob_name = table_name
-       
-        # HARD STOP
-        export_bucket.blob(blob_name).upload_from_string(df.to_csv(),"text/csv")
-        print(f"Table {table_name} successfully saved on the cloud at {BUCKET_NAME}/{blob_name}")
+        blob = export_bucket.blob(table_name)
+        storage.blob._DEFAULT_CHUNKSIZE = 2097152 # 1024 * 1024 B * 2 = 2 MB
+        storage.blob._MAX_MULTIPART_SIZE = 2097152 # 2 MB
+        blob.upload_from_string(df.to_csv(),"text/csv")
+        print(f"Table {table_name} successfully saved on the cloud at {BUCKET_NAME}/{table_name}")
 
 
     else:
