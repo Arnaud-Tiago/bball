@@ -84,7 +84,7 @@ def scrap_batch(start_index, verbose=True):
             print(f"ERROR - Request error on the following game : index {i}, url {url}")
         
         if reponse.status_code not in [200, 403, 404] :
-            print("ERROR - Code on the following game : index {i}, url {url}") 
+            print("ERROR - Code on the following game : index {i}, url {url}, status {reponse.status_code}") 
         elif reponse.status_code == 200 :
             try :
                 json = reponse.json()
