@@ -190,9 +190,11 @@ def increment_league_df(source = 'local', verbose = True):
             l_list.append(dic)
 
     if first :
-        l_df = pd.DataFrame(l_list).drop_duplicates() 
+        l_df = pd.DataFrame(l_list) 
     else :
-        l_df = pd.concat([l_df,pd.DataFrame(l_list)]).drop_duplicates()
+        l_df = pd.concat([l_df,pd.DataFrame(l_list)])
+    
+    l_df.drop_duplicates(inplace=True)
     
     if verbose :
         print(f"Number of lines in the League table after incrementation : {l_df.shape[0]:_}".replace('_',' '))

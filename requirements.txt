@@ -5,3 +5,6 @@ pandas
 google.cloud
 fsspec
 gcsfs
+fastapi
+pytz
+uvicorn
