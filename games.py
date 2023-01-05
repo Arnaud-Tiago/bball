@@ -2,46 +2,33 @@ import requests
 import pandas as pd
 
 useless_plays = ['game', 'period', 'timeout']
+plays_list = ['3pt_made','3pt_missed','2pt_made','2pt_missed','freethrow_made','freethrow_missed','off_rebound','def_rebound','assist','block','steal', 'turnover','foul','foulon']
+qualifiers_list = ['shooting','pointsinthepaint','fromturnover','fastbreak']
+shoots = ['2pt','3pt','freethrow']
+direct_translation = ['foul','foulon', 'assist','steal','turnover', 'block']
 
-def find_possible_plays(games):
+def find_errors(games):
     """
     input : games_df as DataFrame containing a 'fiba_game_id' column  
     --------------------
-    return : three lists:
-        * the possible plays list on the games_df,
-        * the qualifiers (giving more infos on the plays)
-        * the indexes of games without pbp 
+    return : a list containing the indexes of games without pbp 
     """
-    plays =[]
-    qualifiers=[]
     errors = []
 
     for index,row in games.iterrows():
         url_match_fiba = games.iloc[index]['fiba_game_id']
         if not url_match_fiba =='' and not type(url_match_fiba) == float :
             reponse = requests.get(url_match_fiba, timeout = 60)
-            if reponse.status_code == 200 :
-                #print(reponse.status_code, url_match_fiba)     
+            if reponse.status_code == 200 :    
                 game_detail = reponse.json()
-                if not game_detail['pbp'] == []:
-                    pbp = pd.DataFrame(game_detail['pbp'])
-                    plays += list(pbp['actionType'].unique())
-                    qualifiers += list(pbp['qualifier'])
-                    
-                else :
+                if game_detail['pbp'] == []:
                     errors.append(index)
             else :
                 errors.append(index)
         else :
             errors.append(index)
-            
-    fq=[]
-    for qualifier in qualifiers:
-        if not qualifier ==[]:
-            for i in qualifier:
-                fq.append(i)
 
-    return list(set(plays) - set(useless_plays)),list(set(fq)), errors 
+    return errors 
 
 
 def fetch_game_json(url):    
@@ -54,7 +41,7 @@ def fetch_game_json(url):
     return reponse.json()
 
 
-def compile_starting_5(json, team_index):
+def compile_players(json, team_index):
     """
     input : json file containing game info
     --------------------
@@ -94,7 +81,7 @@ def fetch_team_games(games_df,error_indexes, team):
         if not index in error_indexes:
             team_index = 1 if row['home'] == team else 2
             url = row['fiba_game_id']
-            starting_5, players = compile_starting_5(fetch_game_json(row['fiba_game_id']),team_index)
+            starting_5, players = compile_players(fetch_game_json(row['fiba_game_id']),team_index)
             all_pl += players
             team_games.loc[index]['starting_5'] = starting_5
             team_games.loc[index]['players'] = players
@@ -118,3 +105,42 @@ def fetch_other_games_league(url):
         oth_list.append({'id':item['id'], 'competition':item['competitionName']})
         
     return oth_list
+
+
+def map_play(row):
+    res = ''
+
+    if row['actionType'] in direct_translation:
+        res = row['actionType']
+    elif row['actionType'] in shoots:
+        if row['success'] == 1 :
+            res = row['actionType']+'_made'
+        else :
+            res = row['actionType']+'_missed'
+    elif row['actionType'] == 'rebound':
+        if row['subType'] == 'defensive':
+            res = 'def_rebound'
+        else :
+            res = 'off_rebound'
+    else :
+        res = 'ignored'
+
+    return res
+
+def compile_pbp(json):
+    pbp = pd.DataFrame(json['pbp']).sort_values('actionNumber', ascending = True)
+    pbp.set_index('actionNumber', inplace=True)
+    pbp.drop(columns = ['player','shirtNumber','internationalFirstName', 'internationalFamilyName', 'firstNameInitial',
+        'familyNameInitial', 'internationalFirstNameInitial',
+        'internationalFamilyNameInitial', 'scoreboardName'],inplace = True)
+    pbp['player']=pbp['firstName']+ ' ' + pbp['familyName']
+    pbp.drop(columns=['firstName','familyName'], inplace = True)    
+    
+    test =  []
+    for index,row in pbp.iterrows():
+        test.append(map_play(row))
+    pbp['mapped_play'] = test
+    
+    pbp['poss_time_index'] = pbp['periodType']+'_'+[str(item) for item in pbp['period']]+'_'+pbp['clock']
+    
+    return pbp

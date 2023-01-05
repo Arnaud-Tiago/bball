@@ -3,7 +3,7 @@ from google.cloud import storage
 import requests
 
 from params import LOCAL_DATA_PATH, BUCKET_NAME, BACTH_SIZE
-from games import fetch_other_games_league
+from games import fetch_other_games_league, fetch_game_json
 
 data_path = LOCAL_DATA_PATH
 base_url_fiba = 'https://livestats.dcd.shared.geniussports.com/data/'
@@ -204,3 +204,29 @@ def increment_league_df(source = 'local', verbose = True):
     save_data(lldf, table_name= 'last_indices',destination=source)
 
     return 
+
+
+def add_json(source = 'local', verbose=True):
+    """
+    Add the json of the games to the games_df
+    """
+    valid = {'local','cloud'}
+    if source not in valid:
+        raise ValueError("Error : source must be one of %r." % valid)
+    
+    df = load_data(table_name= 'all_fiba_games', provenance=source)
+    start_ind = df['json'].dropna().index.max() + 1 
+    last_ind = df.shape[0]  
+    if verbose :
+        print(f"Number of lines in the DataFrame: {df.shape[0]:_}.".replace('_',' '))
+        print(f"Starting at line number : {start_ind:_}.".replace('_',' '))
+        
+    for i in range(BACTH_SIZE):
+        if not start_ind + i > last_ind :
+            url = df.loc[start_ind + i,'url']
+            json = fetch_game_json(url)
+            df.at[start_ind + i, 'json'] = json
+
+    save_data(df, table_name= 'all_fiba_games',destination=source)
+    
+    return i + BACTH_SIZE
