@@ -215,13 +215,18 @@ def add_json(source = 'local', verbose=True):
         raise ValueError("Error : source must be one of %r." % valid)
     
     df = load_data(table_name= 'all_fiba_games', provenance=source)
-    start_ind = df['json'].dropna().index.max() + 1 
+    if not df['json'].dropna().shape[0] == 0 :
+        start_ind = df['json'].dropna().index.max() + 1 
+    else :
+        start_ind = 0
     last_ind = df.shape[0]  
     if verbose :
         print(f"Number of lines in the DataFrame: {df.shape[0]:_}.".replace('_',' '))
         print(f"Starting at line number : {start_ind:_}.".replace('_',' '))
         
     for i in range(BACTH_SIZE):
+        if verbose :
+            print(f"Getting data for game {i+1:_} out of {BACTH_SIZE:_}.".replace('_',' '))
         if not start_ind + i > last_ind :
             url = df.loc[start_ind + i,'url']
             json = fetch_game_json(url)
@@ -229,4 +234,4 @@ def add_json(source = 'local', verbose=True):
 
     save_data(df, table_name= 'all_fiba_games',destination=source)
     
-    return i + BACTH_SIZE
+    return i
