@@ -2,7 +2,7 @@ import pandas as pd
 from google.cloud import storage
 import requests
 
-from params import LOCAL_DATA_PATH, BUCKET_NAME, BACTH_SIZE
+from params import LOCAL_DATA_PATH, BUCKET_NAME, BATCH_SIZE
 from games import fetch_other_games_league, fetch_game_json
 
 data_path = LOCAL_DATA_PATH
@@ -74,9 +74,9 @@ def load_data(table_name:str, provenance='local') -> pd.DataFrame:
 def scrap_batch(start_index, verbose=True):
     liste = []
 
-    for i in range (start_index, start_index + BACTH_SIZE):
-        if (i - start_index) % int(BACTH_SIZE/20) == 0 and verbose:
-            print(f'Scraping in progress : {int((i - start_index)/BACTH_SIZE*100)} % completed')
+    for i in range (start_index, start_index + BATCH_SIZE):
+        if (i - start_index) % int(BATCH_SIZE/20) == 0 and verbose:
+            print(f'Scraping in progress : {int((i - start_index)/BATCH_SIZE*100)} % completed')
         url = base_url_fiba+str(i)+'/data.json'
         try :
             reponse = requests.get(url, timeout = 60)
@@ -127,18 +127,18 @@ def increment_games_df(source='local', verbose=True):
     nb_updated = gss.shape[0]
 
     if verbose:
-        print(f"Number of added lines: {nb_updated:_} on {BACTH_SIZE:_} API calls.".replace('_',' '))
+        print(f"Number of added lines: {nb_updated:_} on {BATCH_SIZE:_} API calls.".replace('_',' '))
     
     df = pd.concat([df,gss]).drop_duplicates()
 
     if verbose > 0:
-        print(f"End of scrapping at index: {start_index+BACTH_SIZE:_}.".replace('_',' '))
+        print(f"End of scrapping at index: {start_index+BATCH_SIZE:_}.".replace('_',' '))
         print(f"Number of lines in the DataFrame: {df.shape[0]:_}.".replace('_',' '))
         print("Saving the DataFrame ... This may take a while ...")
         
     save_data(df, table_name= 'all_fiba_games',destination=source)
     
-    lldf.loc['all_fiba_games','last_scraped_index'] = start_index + BACTH_SIZE
+    lldf.loc['all_fiba_games','last_scraped_index'] = start_index + BATCH_SIZE
     save_data(lldf, table_name= 'last_indices',destination=source)
     
     return
@@ -164,7 +164,7 @@ def increment_league_df(source = 'local', verbose = True):
         if verbose :
             print("Initialization of the League table")
 
-    g_df = g_df[g_df['id']>start_index][:BACTH_SIZE]
+    g_df = g_df[g_df['id']>start_index][:BATCH_SIZE]
     s_ind = g_df['id'].min() 
     e_ind = g_df['id'].max()
         
@@ -176,9 +176,9 @@ def increment_league_df(source = 'local', verbose = True):
     tmp_list = []
     
     for url in g_df['url'] :
-        if i % int(BACTH_SIZE / 20) == 0:
+        if i % int(BATCH_SIZE / 20) == 0:
             if verbose :
-                print(f"Scraping in progress : {int(i/BACTH_SIZE*100)} %")
+                print(f"Scraping in progress : {int(i/BATCH_SIZE*100)} %")
         
         tmp_list.append(fetch_other_games_league(url))
         i+=1
@@ -224,7 +224,7 @@ def add_json(source = 'local', verbose=True):
         print(f"Number of lines in the DataFrame: {df.shape[0]:_}.".replace('_',' '))
         print(f"Starting at line number : {start_ind:_}.".replace('_',' '))
         
-    for i in range(BACTH_SIZE):
+    for i in range(BATCH_SIZE):
         if verbose :
             print(f"Getting data for game {start_ind+ i :_} out of {last_ind:_}.".replace('_',' '))
         if not start_ind + i > last_ind :
