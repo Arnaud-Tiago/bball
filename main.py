@@ -2,7 +2,7 @@ from data import increment_games_df, increment_league_df, load_data, add_json
 from params import NB_BATCH
 import os
 
-method = 'games'
+method = 'leagues'
 hard_stop = 577597
 
 def execute():
