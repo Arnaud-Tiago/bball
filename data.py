@@ -226,7 +226,7 @@ def add_json(source = 'local', verbose=True):
         
     for i in range(BACTH_SIZE):
         if verbose :
-            print(f"Getting data for game {i+1:_} out of {BACTH_SIZE:_}.".replace('_',' '))
+            print(f"Getting data for game {start_ind+ i :_} out of {last_ind:_}.".replace('_',' '))
         if not start_ind + i > last_ind :
             url = df.loc[start_ind + i,'url']
             json = fetch_game_json(url)
@@ -234,4 +234,4 @@ def add_json(source = 'local', verbose=True):
 
     save_data(df, table_name= 'all_fiba_games',destination=source)
     
-    return i
+    return start_ind + i

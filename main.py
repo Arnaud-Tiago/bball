@@ -11,7 +11,7 @@ def execute():
     if method == 'games':  
         while last_ind < hard_stop:
             last_ind = add_json(source='cloud')
-            print(f"Scraping batch starting at index {last_ind} out of {hard_stop}")
+            print(f"Scraping batch starting at index {last_ind+1} out of {hard_stop}")
     else :
         while last_ind < hard_stop:
             lldf = load_data(table_name='last_indices',provenance='cloud').set_index('table')
