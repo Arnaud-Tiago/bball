@@ -102,7 +102,10 @@ def fetch_other_games_league(url):
         return pd.DataFrame(columns = ['id','competition'])
     oth_list = []
     for item in oth_games:
-        oth_list.append({'id':item['id'], 'competition':item['competitionName']})
+        try :
+            oth_list.append({'id':item['id'], 'competition':item['competitionName']})
+        except :
+            oth_list.append({'id':item['id'], 'competition':'not_found'})
         
     return oth_list
 
