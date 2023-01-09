@@ -1,6 +1,6 @@
 import os
 
-BACTH_SIZE = 4000
+BACTH_SIZE = 800
 LOCAL_DATA_PATH = "~/.basket_project/data/"
 PROJECT = 'basket-369913'
 BUCKET_NAME = "basket-ao-bucket"
