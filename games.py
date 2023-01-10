@@ -41,7 +41,7 @@ def fetch_game_json(url):
     return reponse.json()
 
 
-def compile_players(json, team_index):
+def find_players(json, team_index):
     """
     input : json file containing game info
     --------------------
@@ -81,7 +81,7 @@ def fetch_team_games(games_df,error_indexes, team):
         if not index in error_indexes:
             team_index = 1 if row['home'] == team else 2
             url = row['fiba_game_id']
-            starting_5, players = compile_players(fetch_game_json(row['fiba_game_id']),team_index)
+            starting_5, players = find_players(fetch_game_json(row['fiba_game_id']),team_index)
             all_pl += players
             team_games.loc[index]['starting_5'] = starting_5
             team_games.loc[index]['players'] = players
@@ -147,3 +147,72 @@ def compile_pbp(json):
     pbp['poss_time_index'] = pbp['periodType']+'_'+[str(item) for item in pbp['period']]+'_'+pbp['clock']
     
     return pbp
+
+
+def compile_players_df(pbp_df, s5_list, pl_list, team_index):
+    
+    pl_dict = {player : 0 for player in pl_list}
+    for player in s5_list:
+        pl_dict[player]=1
+        
+    on_floor_dict = {}
+    for index, row in pbp_df.iterrows():
+        
+        # gestion des joueur.se.s sur le terrain
+        on_floor_dict[index] = pl_dict.copy()
+        if pbp_df.loc[index, 'actionType'] == 'substitution' and pbp_df.loc[index,'tno'] == team_index:
+            if row['subType'] == 'in':
+                pl_dict[row['player']] = 1 
+            else :
+                pl_dict[row['player']] = 0 
+    
+    return pd.DataFrame(on_floor_dict).transpose()
+
+def compile_poss_df(pbp_df, team_index):
+    offense = {}
+
+    gain_poss_plays = ['def_rebound','off_rebound','steal']
+    loose_poss_plays = ['3pt_made','2pt_made','turnover']
+    poss_off = 0
+    init_str = 'REGULAR_1_10:00:00'
+    loose_poss = False
+    gain_poss = False
+
+    for index, row in pbp_df.iterrows():
+              
+        # gestion des possession              
+        end_str = row['poss_time_index']    
+        
+        if not end_str == init_str:
+            poss_off = max(min(poss_off + gain_poss - loose_poss,1),0)
+            #print(f'{index}, {init_str} - {end_str}, loose = {loose_poss}, gain = {gain_poss}, poss = {poss_off}')
+            loose_poss = False
+            gain_poss = False 
+        
+        offense[index] = poss_off
+        init_str = end_str    
+        if row['actionType'] == 'jumpball' and row['subType'] == 'won' and row['tno'] == team_index :
+            gain_poss = True
+        elif row['mapped_play'] == 'freethrow_made' and (row['subType'] == '1of1' or row['subType'] == '2of2' or row['subType'] == '3of3'):
+            loose_poss = True   
+        elif row['mapped_play'] in gain_poss_plays and row['tno'] == team_index:
+            gain_poss = True
+        elif row['mapped_play'] in loose_poss_plays and row['tno'] != team_index:
+            gain_poss = True
+        elif row['mapped_play'] in gain_poss_plays and row['tno'] != team_index:
+            loose_poss = True 
+        elif row['mapped_play'] in loose_poss_plays and row['tno'] == team_index:
+            loose_poss = True     
+        
+        #print(f'{index} - loose = {loose_poss} / gain = {gain_poss}')
+        
+    bin_poss = pd.DataFrame(index = pbp_df.index, columns = plays_list+qualifiers_list)
+    bin_poss.fillna(0, inplace = True)
+
+    for column in plays_list:
+        bin_poss[column] = [1 if item == column else 0 for item in pbp_df['mapped_play']]
+        
+    for column in qualifiers_list:
+        bin_poss[column] = [1 if column in item else 0 for item in pbp_df['qualifier']]
+        
+    return bin_poss
